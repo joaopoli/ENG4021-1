@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
+from django.views.generic import TemplateView
 from rest_framework import viewsets
 from rest_framework.response import Response
 from .models import Professor, Comentario
@@ -82,3 +83,8 @@ class ComentarioViewSet(viewsets.ModelViewSet):
     """ViewSet para o modelo Comentario (API REST)."""
     queryset = Comentario.objects.all()
     serializer_class = ComentarioSerializer
+
+
+def index(request):
+    """View para a página inicial (index.html)."""
+    return render(request, 'index.html')
