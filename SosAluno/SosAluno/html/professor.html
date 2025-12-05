@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/styles_css.css">
-    <link rel="stylesheet" href="../css/professor.css"> <!-- Novo CSS para a página do professor -->
+    <link rel="stylesheet" href="../css/professor.css">
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -48,7 +48,7 @@
     </script>
 </head>
 <body class="min-h-screen flex flex-col dark:bg-dark-background dark:text-dark-text">
-    <!-- Header (Copiado de index.html) -->
+    <!-- Header -->
     <header class="bg-primary text-white sticky top-0 z-50 shadow-md dark:bg-dark-card">
         <div class="container mx-auto px-4 py-4 flex justify-between items-center">
             <a href="index.html" class="flex items-center space-x-2 hover:opacity-80 transition">
@@ -116,7 +116,7 @@
         </div>
     </main>
 
-    <!-- Footer (Copiado de index.html) -->
+    <!-- Footer -->
     <footer class="bg-primary text-white py-12 dark:bg-dark-card mt-12">
         <div class="container mx-auto px-4">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -130,8 +130,8 @@
                 <div>
                     <h4 class="font-montserrat font-semibold mb-4">Links</h4>
                     <ul class="space-y-2">
-                        <li><a href="#" class="hover:text-secondary transition">Início</a></li>
-                        <li><a href="#" class="hover:text-secondary transition">Sobre</a></li>
+                        <li><a href="index.html" class="hover:text-secondary transition">Início</a></li>
+                        <li><a href="professores.html" class="hover:text-secondary transition">Professores</a></li>
                         <li><a href="#" class="hover:text-secondary transition">Contato</a></li>
                     </ul>
                 </div>
@@ -159,7 +159,7 @@
     <script>
         feather.replace();
         
-        // Dark mode toggle (Copiado de index.html)
+        // Dark mode toggle
         const themeToggle = document.getElementById('theme-toggle');
         themeToggle.addEventListener('click', () => {
             document.documentElement.classList.toggle('dark');
@@ -167,84 +167,139 @@
             feather.replace();
         });
 
-        // Check for saved theme preference (Copiado de index.html)
+        // Check for saved theme preference
         if (localStorage.getItem('darkMode') === 'true') {
             document.documentElement.classList.add('dark');
         }
         feather.replace();
 
-        // --- Lógica para carregar dados do professor ---
-        async function carregarProfessor() {
-            // Lê o ID do professor da URL (ex: ?id=alexandre-meslin)
-            const urlParams = new URLSearchParams(window.location.search);
-            const professorId = urlParams.get('id') || 'alexandre-meslin'; // Usa o ID da URL ou o padrão (Alexandre Meslin) 
-
-            try {
-                // Simula a busca de dados no JSON (em um ambiente real, seria uma chamada de API)
-                const response = await fetch('../data/professores.json');
-                const professores = await response.json();
-                const professor = professores.find(p => p.id === professorId);
-
-                if (!professor) {
-                    document.getElementById('professor-profile').innerHTML = '<p class="text-center text-error text-xl">Professor não encontrado.</p>';
-                    return;
-                }
-
-                // Atualiza o perfil
-                document.getElementById('prof-foto').src = professor.foto;
-                document.getElementById('prof-nome').textContent = professor.nome;
-                document.getElementById('prof-materia').textContent = professor.materia;
-                document.getElementById('prof-instituicao').textContent = professor.instituicao;
-                document.getElementById('prof-avaliacao-geral').textContent = professor.avaliacao_geral.toFixed(1);
-                document.getElementById('prof-total-avaliacoes').textContent = `(${professor.total_avaliacoes} avaliações)`;
-
-                // Renderiza as estrelas
-                const estrelasContainer = document.getElementById('prof-estrelas');
-                estrelasContainer.innerHTML = '';
-                const avaliacao = professor.avaliacao_geral;
-                for (let i = 1; i <= 5; i++) {
-                    let icon = '';
-                    if (avaliacao >= i) {
-                        icon = 'star'; // Estrela cheia
-                    } else if (avaliacao > i - 1 && avaliacao < i) {
-                        icon = 'star-half'; // Meia estrela (simulado, feather-icons não tem half-star, usarei star-on/star-off no CSS)
-                        // Para simplificar, vou usar apenas 'star' e estilizar com CSS para simular a cor
-                        icon = 'star'; 
-                    } else {
-                        icon = 'star'; // Estrela vazia (simulado, usarei uma cor mais clara no CSS)
+        // --- Base de dados CRUD de professores (embutida) ---
+        const professoresDB = [
+            {
+                "id": "alexandre-meslin",
+                "nome": "Alexandre Meslin",
+                "foto": "/img/prof_alexandre.jpg",
+                "instituicao": "PUC-Rio",
+                "materia": "Projeto de Software",
+                "avaliacao_geral": 4.8,
+                "total_avaliacoes": 95,
+                "comentarios": [
+                    {
+                        "tipo": "positivo",
+                        "texto": "Melhor professor de Projeto de Software! As aulas são super práticas e ele realmente se importa com o aprendizado dos alunos."
+                    },
+                    {
+                        "tipo": "positivo",
+                        "texto": "O Meslin é um mestre em simplificar conceitos complexos. O projeto final foi desafiador, mas muito gratificante."
+                    },
+                    {
+                        "tipo": "negativo",
+                        "texto": "A matéria é ótima, mas a correção das provas é um pouco rigorosa demais. Às vezes, sinto falta de um feedback mais detalhado."
                     }
-                    estrelasContainer.innerHTML += `<i data-feather="${icon}" class="w-6 h-6 ${avaliacao >= i ? 'text-yellow-400 fill-current' : 'text-gray-300'}"></i>`;
-                }
-                feather.replace(); // Recarrega os ícones
-
-                // Renderiza os comentários
-                const comentariosList = document.getElementById('comentarios-list');
-                comentariosList.innerHTML = '';
-                professor.comentarios.forEach(comentario => {
-                    const isPositive = comentario.tipo === 'positivo';
-                    const icon = isPositive ? 'thumbs-up' : 'thumbs-down';
-                    const color = isPositive ? 'success' : 'error';
-                    
-                    const comentarioHtml = `
-                        <div class="p-4 rounded-lg shadow-sm ${isPositive ? 'bg-success bg-opacity-10 dark:bg-success dark:bg-opacity-20' : 'bg-error bg-opacity-10 dark:bg-error dark:bg-opacity-20'}">
-                            <div class="flex items-center mb-2">
-                                <i data-feather="${icon}" class="w-5 h-5 mr-2 text-${color}"></i>
-                                <span class="font-semibold text-${color}">${isPositive ? 'Comentário Positivo' : 'Comentário Negativo'}</span>
-                            </div>
-                            <p class="text-charcoal dark:text-dark-text">${comentario.texto}</p>
-                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Anônimo</p>
-                        </div>
-                    `;
-                    comentariosList.innerHTML += comentarioHtml;
-                });
-                feather.replace(); // Recarrega os ícones
-                
-            } catch (error) {
-                console.error('Erro ao carregar dados do professor:', error);
-                document.getElementById('professor-profile').innerHTML = '<p class="text-center text-error text-xl">Erro ao carregar dados. Verifique o console.</p>';
+                ]
+            },
+            {
+                "id": "ana-silva",
+                "nome": "Ana Silva",
+                "foto": "/img/prof_ana.jpg",
+                "instituicao": "UFRJ",
+                "materia": "Cálculo I",
+                "avaliacao_geral": 3.5,
+                "total_avaliacoes": 120,
+                "comentarios": [
+                    {
+                        "tipo": "positivo",
+                        "texto": "Explica muito bem a teoria. As listas de exercícios ajudam bastante a fixar o conteúdo."
+                    },
+                    {
+                        "tipo": "negativo",
+                        "texto": "As aulas são um pouco monótonas e a professora não é muito acessível fora do horário de aula."
+                    }
+                ]
+            },
+            {
+                "id": "carlos-rodrigues",
+                "nome": "Carlos Rodrigues",
+                "foto": "/img/prof_carlos.jpg",
+                "instituicao": "USP",
+                "materia": "Física Moderna",
+                "avaliacao_geral": 4.1,
+                "total_avaliacoes": 78,
+                "comentarios": [
+                    {
+                        "tipo": "positivo",
+                        "texto": "Muito didático e apaixonado pelo que ensina. As demonstrações em aula são incríveis."
+                    },
+                    {
+                        "tipo": "negativo",
+                        "texto": "O ritmo é muito acelerado. Quem não tem base em física sofre um pouco para acompanhar."
+                    }
+                ]
             }
+        ];
+
+        // --- Função CRUD para buscar professor por ID ---
+        function buscarProfessorPorId(id) {
+            return professoresDB.find(p => p.id === id);
         }
 
+        // --- Lógica para carregar dados do professor ---
+        function carregarProfessor() {
+            // Lê o ID do professor da URL (ex: ?id=alexandre-meslin)
+            const urlParams = new URLSearchParams(window.location.search);
+            const professorId = urlParams.get('id') || 'alexandre-meslin'; // Usa o ID da URL ou o padrão (Alexandre Meslin)
+            
+            console.log('ID do professor da URL:', professorId); // Debug
+
+            // Busca o professor na base de dados
+            const professor = buscarProfessorPorId(professorId);
+            console.log('Professor encontrado:', professor); // Debug
+
+            if (!professor) {
+                document.getElementById('professor-profile').innerHTML = '<p class="text-center text-error text-xl">Professor não encontrado.</p>';
+                return;
+            }
+
+            // Atualiza o perfil
+            document.getElementById('prof-foto').src = professor.foto;
+            document.getElementById('prof-nome').textContent = professor.nome;
+            document.getElementById('prof-materia').textContent = professor.materia;
+            document.getElementById('prof-instituicao').textContent = professor.instituicao;
+            document.getElementById('prof-avaliacao-geral').textContent = professor.avaliacao_geral.toFixed(1);
+            document.getElementById('prof-total-avaliacoes').textContent = `(${professor.total_avaliacoes} avaliações)`;
+
+            // Renderiza as estrelas
+            const estrelasContainer = document.getElementById('prof-estrelas');
+            estrelasContainer.innerHTML = '';
+            const avaliacao = professor.avaliacao_geral;
+            for (let i = 1; i <= 5; i++) {
+                estrelasContainer.innerHTML += `<span class="text-yellow-400 ${avaliacao >= i ? 'text-lg' : 'text-gray-300 text-lg'}">★</span>`;
+            }
+
+            // Renderiza os comentários
+            const comentariosList = document.getElementById('comentarios-list');
+            comentariosList.innerHTML = '';
+            professor.comentarios.forEach(comentario => {
+                const isPositive = comentario.tipo === 'positivo';
+                const icon = isPositive ? 'thumbs-up' : 'thumbs-down';
+                const color = isPositive ? 'success' : 'error';
+                
+                const comentarioHtml = `
+                    <div class="p-4 rounded-lg shadow-sm ${isPositive ? 'bg-success bg-opacity-10 dark:bg-success dark:bg-opacity-20' : 'bg-error bg-opacity-10 dark:bg-error dark:bg-opacity-20'}">
+                        <div class="flex items-center mb-2">
+                            <i data-feather="${icon}" class="w-5 h-5 mr-2 text-${color}"></i>
+                            <span class="font-semibold text-${color}">${isPositive ? 'Comentário Positivo' : 'Comentário Negativo'}</span>
+                        </div>
+                        <p class="text-charcoal dark:text-dark-text">${comentario.texto}</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Anônimo</p>
+                    </div>
+                `;
+                comentariosList.innerHTML += comentarioHtml;
+            });
+            feather.replace(); // Recarrega os ícones
+        }
+
+        // Chama a função quando o documento está pronto
         document.addEventListener('DOMContentLoaded', carregarProfessor);
     </script>
 </body>
